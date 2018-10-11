@@ -1,34 +1,22 @@
 import pandas as pd
 
 
-stock = Stock('MSFT', False)
-stock.histData
+from finData.stock import Stock
+from finData.statistics import Statistics
 
 
-# TODO sowas wie stock klasse, wo ich zB hist data dran hängen kann
-# -> einfacher mehrere stocks im loop zu laden
+stock = Stock('MSFT', outputsize='small')
+df = stock.histData # ist ascending
 
-from finData.alphavantageAdapter import AlphavantageAdapter
+prices = df['adj_close']
+logReturns = Statistics.returns(prices.tolist(), log=True)
+volas = Statistics.volatility(logReturns)
+perf = Statistics.performance(prices, fuzzy=30)
+perf
 
 
-class Stock(object):
-    """
-    Getting and storing info about stock
-
-    downloadData=True (default) to download upon initializing object
-    outputsize='full' (default) to download all data, 'compact' for reduced amount
-    """
-
-    tickerSymbol = ''
-    histData = None
-    _histOutputsize = ''
-
-    def __init__(self, tickerSymbol, downloadData=True, outputsize='full'):
-        self.tickerSymbol = tickerSymbol
-        self._outputsize = outputsize
-        if downloadData:
-            self.downloadHistData()
-
-    def downloadHistData(self):
-        adapter = AlphavantageAdapter
-        self.histData = adapter.getData(self.tickerSymbol, self._outputsize)
+# TODO tests for Statistics
+# for 'small' only calculate possible values
+# everything should end up on stock object
+# discard raw data?
+# garbage collector?
