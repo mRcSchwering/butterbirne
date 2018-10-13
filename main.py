@@ -2,10 +2,19 @@ import pandas as pd
 
 
 from finData.stock import Stock
+from finData.alphavantageDataloader import AlphavantageDataloader
+
+
+stock = Stock('MSFT', ticker='MSFT')
+adapter = AlphavantageDataloader('compact')
+
+stock.loadData(adapter)
+stock.data
+
+
 from finData.statistics import Statistics
 
 
-stock = Stock('MSFT', outputsize='small')
 df = stock.histData # ist ascending
 
 prices = df['adj_close']
@@ -17,6 +26,8 @@ perf
 
 # TODO tests for Statistics
 # for 'small' only calculate possible values
-# everything should end up on stock object
-# discard raw data?
-# garbage collector?
+
+# TODO wie mit loadData + adapter für features
+# -> flexibles anhängen von features wie mit data
+
+# TODO cleanup methode für data

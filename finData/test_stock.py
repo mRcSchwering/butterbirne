@@ -4,36 +4,33 @@ import unittest
 from finData.stock import Stock
 
 
-class mock(Stock):
+class MockDataloader(object):
 
-    def downloadHistData(self, outputsize):
-        self.histData = outputsize
+    def getData(self, stock):
+        return 'some data'
 
 
 class Inits(unittest.TestCase):
 
     def test_nameSetIfProvided(self):
-        s = mock('ticker', 'name')
-        self.assertEqual('ticker', s.ticker)
+        s = Stock('isin', 'name')
+        self.assertEqual('isin', s.isin)
         self.assertEqual('name', s.name)
 
-    def test_tickerAsName(self):
-        s = mock('ticker')
-        self.assertEqual('ticker', s.ticker)
-        self.assertEqual('ticker', s.name)
+    def test_isinAsName(self):
+        s = Stock('isin')
+        self.assertEqual('isin', s.isin)
+        self.assertEqual('isin', s.name)
+
+
+class DataDownload(unittest.TestCase):
 
     def test_dataDownloaded(self):
-        s = mock('ticker')
-        self.assertEqual('all', s.histData)
+        s = Stock('isin')
+        s.loadData(MockDataloader())
+        self.assertEqual('some data', s.data)
 
-    def test_dataNotDownloaded(self):
-        s = mock('ticker', downloadData=False)
-        self.assertIsNone(s.histData)
-
-    def test_smallDataDownloaded(self):
-        s = mock('ticker', outputsize='small')
-        self.assertEqual('small', s.histData)
-
-    def test_wrongOutputSize(self):
+    def test_wrongAdapter(self):
+        s = Stock('isin')
         with self.assertRaises(AttributeError):
-            mock('ticker', outputsize='asd')
+            s.loadData('asd')
