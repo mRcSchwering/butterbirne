@@ -1,33 +1,33 @@
+import sys
 import pandas as pd
 
-
+# Data loading
 from finData.stock import Stock
 from finData.alphavantageDataloader import AlphavantageDataloader
 
-
 stock = Stock('MSFT', ticker='MSFT')
-adapter = AlphavantageDataloader('compact')
-
+adapter = AlphavantageDataloader('full')
 stock.loadData(adapter)
-stock.data
 
-
+# calculate features
 from finData.statistics import Statistics
 
+prices = stock.data['adj_close']
+dailyLogReturns = Statistics.returns(prices.tolist(), log=True)
+Statistics.volatilityYearly(dailyLogReturns)
+Statistics.performanceYearly(prices)
+# TODO obergrenze für vola berechnung
+# zZ wird auf kompletten daily returns daily vola berechnet
+# aber vllt will ich ne Obergrenze haben, weil zB daily volas von vor
+# 20 Jahren nicht mehr aussagekräftig sind
+# oder ich kürze vorher das array (also die dailyLogReturns die ich rein gebe)
 
-df = stock.histData # ist ascending
+# TODO garbage collector für nach der feature Berechnung
 
-prices = df['adj_close']
-logReturns = Statistics.returns(prices.tolist(), log=True)
-volas = Statistics.volatility(logReturns)
-perf = Statistics.performance(prices, fuzzy=30)
-perf
+# TODO Dow Jones Liste
 
+# TODO im Loop mal alles berechnen
 
-# TODO tests for Statistics
-# for 'small' only calculate possible values
+# TODO gescheite plotting lib raussuchen
 
-# TODO wie mit loadData + adapter für features
-# -> flexibles anhängen von features wie mit data
-
-# TODO cleanup methode für data
+import altair
