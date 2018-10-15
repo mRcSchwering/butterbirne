@@ -51,6 +51,8 @@ class AlphavantagApi(object):
             raise AttributeError('Alpha Vantage returned empty content')
         if 'Error Message' in contentKeys:
             raise ValueError(content['Error Message'])
+        if 'Time Series (Daily)' not in contentKeys:
+            raise KeyError('Response has no data: ' + str(content))
         return content
 
     @classmethod

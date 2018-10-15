@@ -16,6 +16,7 @@ prices = stock.data['adj_close']
 dailyLogReturns = Statistics.returns(prices.tolist(), log=True)
 Statistics.volatilityYearly(dailyLogReturns)
 Statistics.performanceYearly(prices)
+
 # TODO obergrenze für vola berechnung
 # zZ wird auf kompletten daily returns daily vola berechnet
 # aber vllt will ich ne Obergrenze haben, weil zB daily volas von vor

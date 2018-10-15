@@ -84,12 +84,18 @@ class StaticMethods(unittest.TestCase):
 
 class Request(unittest.TestCase):
 
-    def setUp(self):
+    def test_normalResponse(self):
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.content.decode = MagicMock(return_value='{"Time Series (Daily)": "test"}')
+        api = mockApi(resp)
+        res = api.request({'function': '', 'symbol': ''})
+        self.assertEqual('test', res['Time Series (Daily)'])
+
+    def test_responseWithoutData(self):
         resp = MagicMock()
         resp.status_code = 200
         resp.content.decode = MagicMock(return_value='{"a": "test"}')
-        self.api = mockApi(resp)
-
-    def test_normalResponse(self):
-        res = self.api.request({'function': '', 'symbol': ''})
-        self.assertEqual('test', res['a'])
+        api = mockApi(resp)
+        with self.assertRaises(KeyError):
+            api.request({'function': '', 'symbol': ''})
