@@ -1,33 +1,32 @@
-import sys
 import pandas as pd
+from altair import Chart
+import matplotlib as plt
+import seaborn as sns
+from ggplot import *
+from matplotlib.pyplot import savefig
 
-# Data loading
-from finData.stock import Stock
-from finData.alphavantageDataloader import AlphavantageDataloader
+df = pd.read_pickle('data/riskPerformance_dowJones_5years_2018-10-17.pkl')
 
-stock = Stock('MSFT', ticker='MSFT')
-adapter = AlphavantageDataloader('full')
-stock.loadData(adapter)
+df.columns
 
-# calculate features
-from finData.statistics import Statistics
 
-prices = stock.data['adj_close']
-dailyLogReturns = Statistics.returns(prices.tolist(), log=True)
-Statistics.volatilityYearly(dailyLogReturns)
-Statistics.performanceYearly(prices)
+d = df.loc[df['Timeperiod'] == 'YTD']
+base = Chart(d).encode(
+    x='Volatility',
+    y='Performance',
+    color='Industry'
+)
 
-# TODO obergrenze für vola berechnung
-# zZ wird auf kompletten daily returns daily vola berechnet
-# aber vllt will ich ne Obergrenze haben, weil zB daily volas von vor
-# 20 Jahren nicht mehr aussagekräftig sind
-# oder ich kürze vorher das array (also die dailyLogReturns die ich rein gebe)
+p = ggplot(aes(x='Volatility', y='Performance', color='Industry'), data=d) +\
+    geom_text(aes(label='Company')) +\
+    geom_point() +\
+    theme_bw()
+p.save('asd.png')
+ggsave('asd.png')
 
-# TODO garbage collector für nach der feature Berechnung
-
-# TODO Dow Jones Liste
-
-# TODO im Loop mal alles berechnen
+full = base.mark_circle() + base.mark_text(dx=15).encode(text='Company')
+savefig('foo.png')
+full.save('asd.png')
 
 # TODO gescheite plotting lib raussuchen
 
