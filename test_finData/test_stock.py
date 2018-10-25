@@ -10,6 +10,12 @@ class MockDataloader(object):
         return 'some data'
 
 
+class MockFeatureExtractor(object):
+
+    def getFeatures(self, stock):
+        return 'some features'
+
+
 class Inits(unittest.TestCase):
 
     def test_nameSetIfProvided(self):
@@ -34,3 +40,17 @@ class DataDownload(unittest.TestCase):
         s = Stock('isin')
         with self.assertRaises(AttributeError):
             s.loadData('asd')
+
+
+class FeatureExtraction(unittest.TestCase):
+
+    def test_featuresExtracted(self):
+        s = Stock('isin')
+        s.data = 'data'
+        s.extractFeatures(MockFeatureExtractor())
+        self.assertEqual('some features', s.features)
+
+    def test_dataNotLoaded(self):
+        s = Stock('isin')
+        with self.assertRaises(AttributeError):
+            s.extractFeatures('asd')

@@ -13,7 +13,7 @@ def getCurrentRiskPerformanceData(stockInfoDf,
     """
     Download historic prices, then calculate volatilities and performances
     for the past nYears for the DataFrame of stocks provided.
-    Save the results as pickle.
+    Save the results as csv.
 
     stockInfoDf is the DataFrame with stock information.
     It must have column 'Symbol' with the ticker and column 'Company' with
@@ -102,5 +102,5 @@ def getCurrentRiskPerformanceData(stockInfoDf,
     merged = stockInfoDf.set_index('Symbol').join(features.set_index('Symbol'))
 
     # save
-    merged.to_pickle(outfile)
+    merged.to_csv(outfile)
     print('...done')

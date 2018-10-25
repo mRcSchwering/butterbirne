@@ -10,6 +10,7 @@ class Stock(object):
     isin = ''
     name = ''
     data = None
+    features = None
 
     def __init__(self, isin, name='', ticker=''):
         self.isin = isin
@@ -21,3 +22,11 @@ class Stock(object):
         Provide adapter for downloading data for this stock.
         """
         self.data = dataloader.getData(self)
+
+    def extractFeatures(self, extractor):
+        """
+        Provide adapter for extracting features for this data.
+        """
+        if self.data is None:
+            raise AttributeError('Stock has no data, loadData first')
+        self.features = extractor.getFeatures(self)
