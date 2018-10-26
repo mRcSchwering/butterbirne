@@ -16,6 +16,12 @@ class MockFeatureExtractor(object):
         return 'some features'
 
 
+class MockFeatureWriter(object):
+
+    def writeFeatures(self, stock):
+        return 'saved'
+
+
 class Inits(unittest.TestCase):
 
     def test_nameSetIfProvided(self):
@@ -54,3 +60,17 @@ class FeatureExtraction(unittest.TestCase):
         s = Stock('isin')
         with self.assertRaises(AttributeError):
             s.extractFeatures('asd')
+
+
+class FeatureSaving(unittest.TestCase):
+
+    def test_featuresSaved(self):
+        s = Stock('isin')
+        s.features = 'features'
+        res = s.saveFeatures(MockFeatureWriter())
+        self.assertEqual('saved', res)
+
+    def test_noFeaturesExtracted(self):
+        s = Stock('isin')
+        with self.assertRaises(AttributeError):
+            s.saveFeatures(MockFeatureWriter())

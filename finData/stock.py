@@ -30,3 +30,11 @@ class Stock(object):
         if self.data is None:
             raise AttributeError('Stock has no data, loadData first')
         self.features = extractor.getFeatures(self)
+
+    def saveFeatures(self, writer):
+        """
+        Provide adapter for saving features.
+        """
+        if self.features is None:
+            raise AttributeError('Stock has no features, extractFeatures first')
+        return writer.writeFeatures(self)

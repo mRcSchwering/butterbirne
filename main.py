@@ -25,9 +25,9 @@ from matplotlib.pyplot import savefig
 
 # TODO Vola und Perf berechnung auf diesen Daten
 # (was für exceptions können kommen? soll robust sein)
-
-
 # TODO Methode, die das monat für monat berechnet (in verg. gehend) bis daten "leer"
+
+
 # TODO schreib methode: in RAM? oder lieber direkt schreiben? (vllt sicherer)
 # TODO mögliche exceptions finden und sinnvoll behandeln
 
