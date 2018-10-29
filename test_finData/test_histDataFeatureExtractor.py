@@ -94,3 +94,10 @@ class getFeatures(unittest.TestCase):
         h = HistDataFeatureExtractor(dt.date(2017, 1, 1))
         res = h.getFeatures(self.s)
         self.assertTupleEqual((0, 0), res.shape)
+
+    def test_iteratorIsReloadedOnEveryCall(self):
+        h = HistDataFeatureExtractor(dt.date(2018, 10, 10))
+        res = h.getFeatures(self.s)
+        self.assertTupleEqual((4, 4), res.shape)
+        res = h.getFeatures(self.s)
+        self.assertTupleEqual((4, 4), res.shape)

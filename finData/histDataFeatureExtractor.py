@@ -42,11 +42,13 @@ class HistDataFeatureExtractor(object):
     def __init__(self, latest, maxYears=10):
         if not isinstance(latest, dt.date):
             raise TypeError('latest must be datetime.date')
-        self._steps = MonthlySteps(latest.month, latest.year, maxYears)
+        self._month = latest.month
+        self._year = latest.year
+        self._maxYears = maxYears
 
     def getFeatures(self, stock):
         records = []
-        for step in self._steps:
+        for step in MonthlySteps(self._month, self._year, self._maxYears):
             month = step[0]
             year = step[1]
             df = Utils.filterBy(stock.data, month=month, year=year)

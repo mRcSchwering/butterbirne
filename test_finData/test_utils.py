@@ -4,7 +4,7 @@ import pandas as pd
 from finData.utils import Utils
 
 
-class utilsOnHistData(unittest.TestCase):
+class UtilsOnHistData(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -27,3 +27,26 @@ class utilsOnHistData(unittest.TestCase):
         self.assertEqual(0, df.shape[0])
         df = Utils.filterBy(self.df, month=9, year=2017)
         self.assertEqual(0, df.shape[0])
+
+
+class CheckStockInfo(unittest.TestCase):
+
+    def setUp(self):
+        self.df = pd.DataFrame({'a': ['a', 'b'], 'b': ['c', 'd']})
+
+    def test_wrongTypeProvided(self):
+        with self.assertRaises(TypeError):
+            Utils.checkStockInfo('asd', ['a'])
+        with self.assertRaises(TypeError):
+            Utils.checkStockInfo(self.df, 'a')
+        Utils.checkStockInfo(self.df, ['a'])
+
+    def test_columnMissing(self):
+        with self.assertRaises(AttributeError):
+            Utils.checkStockInfo(self.df, ['c'])
+        Utils.checkStockInfo(self.df, ['a', 'b'])
+
+    def test_missingValues(self):
+        self.df.iat[0, 0] = ''
+        with self.assertRaises(ValueError):
+            Utils.checkStockInfo(self.df, ['a', 'b'])
