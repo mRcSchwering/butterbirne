@@ -1,0 +1,177 @@
+---
+title: "DQR_dowJones_histFeatures_10y"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+library(tidyr)
+theme_set(theme_bw())
+```
+
+
+
+```{r}
+data <- read.csv("../data/dowJones_histFeatures_10y.csv", stringsAsFactors = FALSE)
+str(data)
+```
+
+# Data Structure
+
+```{r}
+table(data$year)
+table(data$month)
+table(data$variable)
+summary(data$value)
+```
+
+# Distributions
+
+```{r}
+ggplot(data) +
+  geom_histogram(aes(x = value), bins = 30) +
+  facet_wrap(~variable, nrow = 2, scales = "free")
+volas <- data$variable == "vola"
+data$variable[volas] <- "logVola"
+summary(data[volas, ]$value)
+data$value[volas] <- log(data$value[volas])
+ggplot(data) +
+  geom_histogram(aes(x = value), bins = 30) +
+  facet_wrap(~variable, nrow = 2, scales = "free")
+```
+
+# Correlation
+
+```{r}
+wide <- spread(data, variable, value)
+ggplot(wide) +
+  geom_point(aes(x = logVola, y = logReturn))
+```
+
+# Time Dependence
+
+## Return
+
+```{r}
+wide$date <- as.Date(sprintf("%d-%d-1", wide$year, wide$month), format = "%Y-%m-%d")
+ggplot(wide) +
+  geom_path(aes(x = date, y = logReturn, group = isin, group = isin), alpha = .3)
+```
+
+## Volatility
+
+```{r}
+ggplot(wide) +
+  geom_path(aes(x = date, y = logVola, group = isin, group = isin), alpha = .3)
+```
+
+# Subyearly Effects
+
+## Return
+
+```{r}
+ggplot(wide) +
+  geom_violin(aes(x = factor(month), y = logReturn), fill = "gray", color=NA) +
+  geom_boxplot(aes(x = factor(month), y = logReturn), fill = NA)
+```
+
+## Volatility
+
+```{r}
+ggplot(wide) +
+  geom_violin(aes(x = factor(month), y = logVola), fill = "gray", color=NA) +
+  geom_boxplot(aes(x = factor(month), y = logVola), fill = NA)
+```
+
+
+# Filtering
+
+Zunächst möchte ich erst mal auf Jahres basis arbeiten.
+Deshalb sind nur Daten für ganze Jahre komplett.
+
+```{r}
+isReturn <- data$variable == "logReturn"
+isVola <- data$variable == "logVola"
+isins <- unique(data$isin)
+```
+
+For each ISIN, check whether there is volatility and return for each month
+of a given year.
+
+```{r}
+getIsinsWithCompleteDataFor <- function(year) {
+  isYear <- data$year == year
+  isComplete <- sapply(isins, function(d) {
+    isIsin <- data$isin == d
+    if (sum(table(data[isIsin & isYear & isVola, ]$month)) < 12) {
+      return(FALSE)
+    } else if (sum(table(data[isIsin & isYear & isReturn, ]$month)) < 12) {
+      return(FALSE)
+    }
+    return(TRUE)
+  })
+  return(isComplete)
+}
+```
+
+Check that for each year
+
+```{r}
+fullYears <- data.frame(isin = isins)
+for (year in sort(unique(data$year))) {
+  fullYears[[as.character(year)]] <- getIsinsWithCompleteDataFor(year)
+}
+long <- gather(fullYears, year, complete, -isin)
+```
+
+```{r}
+table(long$year, long$complete)
+```
+```{r}
+fullYears$`2008` <- NULL
+fullYears$`2018` <- NULL
+long <- gather(fullYears, year, complete, -isin)
+(incompleteIsins <- as.character(unique(long[!long$complete, ]$isin)))
+```
+
+* `US26078J1007` ist DowDuPoint
+* `US02079K1079` ist Alphabet C
+* `US30303M1027` ist Facebook
+
+```{r}
+for (isin in incompleteIsins) {
+  print(isin)
+  print(long[long$isin == isin & !long$complete, ]$year)
+}
+```
+
+```{r}
+table(data[data$isin == incompleteIsins[1], ]$year)
+table(data[data$isin == incompleteIsins[2], ]$year)
+table(data[data$isin == incompleteIsins[3], ]$year)
+```
+
+```{r}
+data <- data[!data$isin %in% incompleteIsins, ]
+data <- data[!data$year %in% c(2008, 2018), ]
+```
+
+
+# Final Set
+
+```{r}
+nrow(data)
+length(unique(data$isin))
+length(unique(data$year))
+```
+
+```{r}
+write.csv(data, file = "../data/dowJones_histFeatures_10y_DQR_fullYears.csv",
+          quote = FALSE, row.names = FALSE)
+```
+
+
