@@ -13,6 +13,8 @@ from matplotlib.pyplot import savefig
 # daily log returns summieren für monatl log return
 # aus daily log returns daily vola berechnen
 # mit extrapol={'monthly': 252/12} extrapolieren auf monatl.
+# TODO wie berechne ich aus monthly vola, yearly vola
+
 
 # Auf stock liegen nun alles high level aktionen
 # - daten laden
