@@ -2,6 +2,8 @@
 import xgboost as xgb
 import pandas as pd
 
+from finData.abtCreator import WindowIterator
+
 # TODO Klasse(n) für X, Y Berechnung pro window, Feature Berechnung möglichst flexibel
 # TODO Klasse für Window shifting
 # TODO Klasse die alle windows zu einer großen X und Y zusammen baut
@@ -17,6 +19,77 @@ import pandas as pd
 workingDir = './experiments/dowJones_histFeatures_10y_fullYears/'
 data = pd.read_csv(workingDir + 'postDQR_long.csv')
 isins = list(set(data['isin']))
+
+data['steps'] = data['year'].map(str) + '-' + data['month'].map(str)
+stepCol = 'steps'
+
+steps = []
+for year in sorted(set(data['year'])):
+    for month in sorted(set(data['month'])):
+        steps.append(str(year) + '-' + str(month))
+
+windows = WindowIterator(steps, 3)
+
+
+# Klasse braucht
+# isins
+# data
+ISINS = isins
+DATA = data
+Y_ = getTargetForWindow(w_y, calculateY)
+
+
+def calculateY(isins, df):
+    y = []
+    for isin in isins:
+        cond = (df['isin'] == isin) & (df['variable'] == 'logReturn')
+        y.append(sum(df.loc[cond]['value']))
+    quants = pd.np.quantile(y, [0.25, 0.75])
+    return [int(d > quants[1]) for d in y]
+
+abtc = ABTcreator(data, isins, windows, calculateY)
+
+Y = abtc.calculateABT()
+Y.keys()
+df = pd.DataFrame({'tp': [1, 2]})
+df['a'] = 'a'
+
+
+type(data)
+data.loc[data['month'] == [1, 2]]
+
+
+def a(a):
+    return a
+
+class ABTcreator(object):
+
+    def __init__(self, data, isins, windows, getY):
+        self._data = data
+        self._isins = isins
+        self._windows = windows
+        self._getY = getY
+
+    def calculateABT(self):
+        Y = {}
+        for w in self._windows:
+            w_y = w[len(w) - 1]
+            y = self._getTargetForWindow(w_y, self._getY)
+            Y[w_y] = y
+        return Y
+
+    def _getTargetForWindow(self, w, getY, step='steps', target='target'):
+        Y = pd.DataFrame(index=self._isins)
+        df = self._data.loc[self._data[step] == w]
+        Y[target] = getY(self._isins, df)
+        return Y
+
+
+[1,2,3][:-1]
+
+
+
+
 
 
 T = set([d for d in data['year']])  # all steps available
@@ -41,16 +114,6 @@ for step in range(m - 1):
     X['sumLogReturn' + str(p)] = x1
     X['sumLogVola' + str(p)] = x2
 
-# calculate labels for window
-Y = pd.DataFrame(index=isins)
-df = data.loc[data['year'] == W[m - 1]]
-y = []
-for isin in isins:
-    cond1 = (df['isin'] == isin) & (df['variable'] == 'logReturn')
-    y.append(sum(df.loc[cond1]['value']))
-
-quants = pd.np.quantile(y, [0.25, 0.75])
-Y['label'] = [int(d > quants[1]) for d in y]
 
 
 
