@@ -19,6 +19,8 @@ theme_set(theme_bw())
 ```{r}
 X <- read.csv("X.csv", stringsAsFactors = FALSE)
 Y <- read.csv("Y.csv", stringsAsFactors = FALSE)
+X$X <- NULL
+Y$X <- NULL
 ```
 
 # Data Structure
@@ -34,18 +36,20 @@ summary(X)
 # Target Variables
 
 ```{r}
+summary(Y$target_logReturn)
 table(Y$isLowerQuart, Y$isUpperQuart)
 ```
 # Predictor Variables
 
 ```{r}
-logReturn <- gather(X[, c("X", "logReturn_d1", "logReturn_d2")], variable, value, -X)
+logReturn <- gather(X[, c("logReturnSum", "logReturnDelta", "logReturn_d1", "logReturn_d2")], variable, value)
 ggplot(logReturn) +
   geom_violin(aes(x = variable, y = value), fill = "gray", color = NA) +
   geom_boxplot(aes(x = variable, y = value), fill = NA)
 ```
+
 ```{r}
-logVola <- gather(X[, c("X", "logVola_d1", "logVola_d2")], variable, value, -X)
+logVola <- gather(X[, c("logVolaSum", "logVolaDelta", "logVola_d1", "logVola_d2")], variable, value)
 ggplot(logVola) +
   geom_violin(aes(x = variable, y = value), fill = "gray", color = NA) +
   geom_boxplot(aes(x = variable, y = value), fill = NA)
@@ -55,7 +59,7 @@ ggplot(logVola) +
 
 ## Features
 
-```{r}
+```{r, fig.width=10, fig.height=10}
 cormat <- round(cor(X), 2)
 melted <- melt(t(cormat))
 ggplot(data = melted, aes(x=Var1, y=Var2, fill=value)) + 
@@ -65,10 +69,9 @@ ggplot(data = melted, aes(x=Var1, y=Var2, fill=value)) +
 
 ## Target
 
-```{r}
+```{r, fig.width=10, fig.height=10}
 XY <- cbind(X, Y)
-XY$X <- NULL
-long <- gather(XY, variable, value, c(-X, -isUpperQuart, -isLowerQuart))
+long <- gather(XY, variable, value, c(-target_logReturn, -isUpperQuart, -isLowerQuart))
 ggplot(long) +
   geom_violin(aes(x = factor(isUpperQuart), fill = factor(isUpperQuart), y = value), color = NA) +
   geom_boxplot(aes(x = factor(isUpperQuart), y = value), fill = NA) +
@@ -76,6 +79,9 @@ ggplot(long) +
 ggplot(long) +
   geom_violin(aes(x = factor(isLowerQuart), fill = factor(isLowerQuart), y = value), color = NA) +
   geom_boxplot(aes(x = factor(isLowerQuart), y = value), fill = NA) +
+  facet_wrap(~variable, scales = "free")
+ggplot(long) +
+  geom_point(aes(x = value, y = target_logReturn), size = .1, alpha = .3) +
   facet_wrap(~variable, scales = "free")
 ```
 

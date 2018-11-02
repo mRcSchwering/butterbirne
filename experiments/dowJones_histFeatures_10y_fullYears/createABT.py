@@ -26,6 +26,7 @@ def getY(isins, df):
         y.append(logRet.iat[0])
     quants = pd.np.quantile(y, [0.25, 0.75])
     Y = pd.DataFrame({
+        'target_logReturn': y,
         'isUpperQuart': [int(d > quants[1]) for d in y],
         'isLowerQuart': [int(d < quants[0]) for d in y]
     })
@@ -59,5 +60,10 @@ res = abt.getABT(getY, getX)
 
 Y = res['Y']
 X = res['X']
+X['logReturnSum'] = X['logReturn_d2'] + X['logReturn_d1']
+X['logVolaSum'] = X['logVola_d2'] + X['logVola_d1']
+X['logReturnDelta'] = X['logReturn_d2'] - X['logReturn_d1']
+X['logVolaDelta'] = X['logVola_d2'] - X['logVola_d1']
+
 Y.to_csv(workingDir + 'Y.csv')
 X.to_csv(workingDir + 'X.csv')
