@@ -58,8 +58,8 @@ class AbtCreator(object):
         y = []
         x = []
         for w in self._windows:
-            y.append(self._getTargetForWindow(w[-1], getY, self._tp))
-            x.append(self._getVarsForWindow(w[:-1], getX, self._tp))
+            y.append(self._getTargetForWindow(w[-1], getY))
+            x.append(self._getVarsForWindow(w[:-1], getX))
         Y = pd.concat(y, ignore_index=True)
         X = pd.concat(x, ignore_index=True)
         return {'X': X, 'Y': Y}
@@ -89,7 +89,7 @@ class AbtCreator(object):
     def _checkArguments(self):
         if not isinstance(self._data, pd.core.frame.DataFrame):
             raise TypeError('data must be DataFrame')
-        if len(self._tps) is not self._data.shape[0]:
+        if len(self._tps) != self._data.shape[0]:
             raise AttributeError('timepoints has length %d, expected length %d' % (len(self._tps), self._data.shape[0]))
         if self._windows.n < 2:
             raise AttributeError('windows iterator has a window size smaller 2')
@@ -100,7 +100,7 @@ class AbtCreator(object):
     def _checkFunResults(cls, type, mainDf, df):
         if not isinstance(df, pd.core.frame.DataFrame):
             raise TypeError('get%s does not return DataFrame' % type)
-        if df.shape[0] is not mainDf.shape[0]:
+        if df.shape[0] != mainDf.shape[0]:
             raise AttributeError('get%s returned %d rows, expected %d rows' % (type, df.shape[0], mainDf.shape[0]))
         dups = [col for col in df.columns if col in mainDf.columns]
         if len(dups) > 0:
@@ -124,5 +124,32 @@ class AbtCreator(object):
         In this example, the data point of each time window are concatnated
         by '-' for each ISIN.
         """
-        y = ['%s:%s' % (isins, '-'.join(df.iloc[:, 0]))]
+        y = ['%s:%s' % (isin, '-'.join(df.iloc[:, 0])) for isin in isins]
         return pd.DataFrame({'target': y})
+
+    @classmethod
+    def getX(self, isins, df, dist):
+        """
+        This is an example for getX.
+        Provide custom getX to getABT for deriving feature variable(s).
+
+        must take 3 arguments and return a DataFrame:
+        Args    isins: list of unique ISINs
+                df: DataFrame of data subsetted to current time point
+                dist: int for distance to target in number of time points
+        Return  DataFrame with as many rows as isins containing feature variable(s)
+
+        In every time window, all time points except for the last one are used
+        to calculate features for predicting the target variable.
+        In every window these time points are iterated over chronologically.
+        Data is subset to to contain only values for that time point and then
+        handed over to getX as df. Use getX to derive feature variable(s)
+        and return them as DataFrame with 1 row for each ISIN.
+        In this example, the data points of each time point are concatnated
+        by '-' for each ISIN.
+        Since there can be more than 1 time point per window, the column name
+        for the derived feature is altered with dist. This is the distance in
+        time points to the last column (the target column).
+        """
+        y = ['%s:%s' % (isin, '-'.join(df.iloc[:, 0])) for isin in isins]
+        return pd.DataFrame({('feat_d%s' % dist): y})

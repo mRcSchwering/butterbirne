@@ -45,6 +45,7 @@ for year in sorted(set(data['year'])):
 
 windows = WindowIterator(steps, 3)
 
+pd.DataFrame({('asd%d' % 1): [1]})
 
 # Klasse braucht
 # isins
