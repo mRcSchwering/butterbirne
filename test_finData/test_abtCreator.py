@@ -112,12 +112,12 @@ class getVarsForWindow(unittest.TestCase):
         df = pd.DataFrame({'a': ['a', 'b', 'c']})
         self.abt = AbtCreator(df, ['x', 'y'], [2, 2, 3], self.W)
 
-    # def test_defaultGetY(self):
-    #     res = self.abt._getTargetForWindow(2, lambda i, d: pd.DataFrame(index=i))
-    #     self.assertIsInstance(res, pd.core.frame.DataFrame)
-    #     self.assertTupleEqual((2, 0), res.shape)
-    #     self.assertListEqual(['x', 'y'], list(res.index))
-    #
+    def test_defaultGetX(self):
+        res = self.abt._getVarsForWindow([1, 2], lambda i, d: pd.DataFrame(index=i))
+        self.assertIsInstance(res, pd.core.frame.DataFrame)
+        self.assertTupleEqual((2, 0), res.shape)
+        self.assertListEqual(['x', 'y'], list(res.index))
+
     # def test_2targetCols(self):
     #     def fun(i, d):
     #         return pd.DataFrame({'a': i, 'b': i})
