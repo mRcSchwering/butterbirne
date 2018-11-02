@@ -2,6 +2,21 @@
 import xgboost as xgb
 import pandas as pd
 
+df = pd.DataFrame({'a': ['a', 'b', 'c']})
+isins = ['x', 'y']
+tps = [2, 2, 3]
+w = 2
+
+
+l = []
+'-'.join(df.iloc[:,0])
+
+l.append(df)
+l.append(df)
+pd.concat(l, ignore_index=True)
+
+
+
 from finData.abtCreator import WindowIterator
 
 # TODO Klasse(n) für X, Y Berechnung pro window, Feature Berechnung möglichst flexibel
