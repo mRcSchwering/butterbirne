@@ -260,6 +260,7 @@ class getABTtests(unittest.TestCase):
         res = abt.getABT()
         X = res['X']
         Y = res['Y']
+        M = res['meta']
 
         self.assertTupleEqual((6, 1), Y.shape)
         self.assertListEqual(['target'], list(Y.columns))
@@ -286,3 +287,13 @@ class getABTtests(unittest.TestCase):
         self.assertEqual('x:c', X.iat[3, 1])
         self.assertEqual('y:c', X.iat[4, 1])
         self.assertEqual('z:c', X.iat[5, 1])
+
+        self.assertTupleEqual((6, 2), M.shape)
+        self.assertListEqual(['window', 'isin'], list(M.columns))
+        for i in range(3):
+            self.assertEqual(3, M.iat[i, 0])
+            self.assertEqual(4, M.iat[i + 3, 0])
+        for i in range(2):
+            self.assertEqual('x', M.iat[i * 3, 1])
+            self.assertEqual('y', M.iat[i * 3 + 1, 1])
+            self.assertEqual('z', M.iat[i * 3 + 2, 1])

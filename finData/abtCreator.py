@@ -57,12 +57,15 @@ class AbtCreator(object):
             getX = self.getX
         y = []
         x = []
+        m = []
         for w in self._windows:
+            m.append(self._getMetadata(w[-1]))
             y.append(self._getTargetForWindow(w[-1], getY))
             x.append(self._getVarsForWindow(w[:-1], getX))
         Y = pd.concat(y, ignore_index=True)
         X = pd.concat(x, ignore_index=True)
-        return {'X': X, 'Y': Y}
+        M = pd.concat(m, ignore_index=True)
+        return {'X': X, 'Y': Y, 'meta': M}
 
     def _getTargetForWindow(self, w, getY):
         if isinstance(w, (list, tuple, set, dict)):
@@ -85,6 +88,13 @@ class AbtCreator(object):
             for col in x.columns:
                 X[col] = list(x[col])
         return X
+
+    def _getMetadata(self, w):
+        df = pd.DataFrame({
+            'window': [w] * len(self._isins),
+            'isin': self._isins
+        })
+        return df
 
     def _checkArguments(self):
         if not isinstance(self._data, pd.core.frame.DataFrame):
