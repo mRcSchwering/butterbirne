@@ -26,6 +26,15 @@ Ytest = Y[300:400]
 dtrain = xgb.DMatrix(Xtrain, label=Ytrain.isUpperQuart)
 dval = xgb.DMatrix(Xval, label=Yval.isUpperQuart)
 
+from finData.parameterGenerator import ParameterGenerator
+paramGen = ParameterGenerator()
+paramGen.next(1, 1.2)
+paramGen.next(1, 1.2)
+paramGen.next(1, 1.2)
+paramGen.next(1, 1.2)
+paramGen.next(1, 1.2)
+paramGen.getResults(0, 0)
+
 param = {
     'max_depth': 7,
     'gamma': .3,

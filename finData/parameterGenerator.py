@@ -65,13 +65,15 @@ class ParameterGenerator(object):
         if param == 'max_depth' and isTooComplex:
             preVal = self._capture[param][-1]
             pop = [d for d in self.parameters[param]['range'] if d < preVal]
+            if len(pop) < 1:
+                return 1
             return random.sample(pop, 1)[0]
         return random.sample(self.parameters[param]['range'], 1)[0]
 
     def _updateParameters(self, values):
         for param in self.parameters:
-            self._capture[param].append(self.parameters[param]['value'])
             self.parameters[param]['value'] = values[param]
+            self._capture[param].append(values[param])
 
     def _createCaptureLists(self):
         cap = {'iter': [], 'train': [], 'test': []}
