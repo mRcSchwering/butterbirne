@@ -5,9 +5,9 @@ import random
 
 class ParameterGenerator(object):
     """
-    Do random search for parameters with primitive feature of taking difference
-    between train and test metrics into consideration.
-    Use next() and getResults()
+    Iterator for generating parameter generator for random search over parameter space.
+    Arg     N int maximum number of iterations
+    Attr    isTooComplex bool whether previous set of parameters resulted in a too complex model
     """
 
     parameters = {
@@ -25,64 +25,43 @@ class ParameterGenerator(object):
         }
     }
 
-    def __init__(self):
-        self.i = 0
-        for param in self.parameters:
-            self.parameters[param]['value'] = self.parameters[param]['start']
-        self._createCaptureLists()
+    def __init__(self, N):
+        self.i = 0  # current iteration
+        self.N = N  # maximum number of iteration
+        self.isTooComplex = False  # whether current model is too complex
 
-    def next(self, train, test):
-        """
-        Provide train and test results from previous run
-        to get next set of parameters.
-        """
-        self._capture['iter'].append(self.i)
-        self._capture['train'].append(train)
-        self._capture['test'].append(test)
-        newValues = self._getNewValues(train, test)
-        self._updateParameters(newValues)
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.i >= self.N:
+            raise StopIteration
+        if self.i < 1:
+            self._setStartValues()
+        else:
+            self._updateParameters(self.isTooComplex)
         self.i += 1
-        return newValues
-
-    def getResults(self, train, test):
-        """
-        Provide train and test results from previous run
-        and get summary of parameter sets and results as DataFrame.
-        """
-        self._capture['iter'].append(self.i)
-        self._capture['train'].append(train)
-        self._capture['test'].append(test)
-        return pd.DataFrame(self._capture)
-
-    def _getNewValues(self, train, test):
-        vals = dict()
-        isTooComplex = self._modelTooComplex(train, test)
-        for param in self.parameters:
-            vals[param] = self._getNewValue(param, isTooComplex)
-        return vals
+        return self._getParamValues()
 
     def _getNewValue(self, param, isTooComplex):
         if param == 'max_depth' and isTooComplex:
-            preVal = self._capture[param][-1]
+            preVal = self.parameters[param]['value']
             pop = [d for d in self.parameters[param]['range'] if d < preVal]
             if len(pop) < 1:
                 return 1
             return random.sample(pop, 1)[0]
         return random.sample(self.parameters[param]['range'], 1)[0]
 
-    def _updateParameters(self, values):
+    def _updateParameters(self, isTooComplex):
         for param in self.parameters:
-            self.parameters[param]['value'] = values[param]
-            self._capture[param].append(values[param])
+            self.parameters[param]['value'] = self._getNewValue(param, isTooComplex)
 
-    def _createCaptureLists(self):
-        cap = {'iter': [], 'train': [], 'test': []}
+    def _setStartValues(self):
         for param in self.parameters:
-            cap[param] = [self.parameters[param]['value']]
-        self._capture = cap
+            self.parameters[param]['value'] = self.parameters[param]['start']
 
-    @classmethod
-    def _modelTooComplex(cls, metricTrain, metricTest):
-        if metricTrain <= 0:
-            return False
-        return True if metricTest/metricTrain > 1.1 else False
+    def _getParamValues(self):
+        out = dict()
+        for param in self.parameters:
+            out[param] = self.parameters[param]['value']
+        return out

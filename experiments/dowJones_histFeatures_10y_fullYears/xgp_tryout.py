@@ -2,12 +2,18 @@
 import xgboost as xgb
 import pandas as pd
 
-# TODO Klasse für hyperparameter tuning
+from finData.parameterGenerator import ParameterGenerator
 
+
+# TODO erst mal gucken ob scikit ausreicht
 # TODO Klasse für Train/Val Trennung
 # TODO Klasse für Repeated CrossVal
 
 # TODO richtige Vola Berechnung
+# TODO createABT nochmal überarbeiten -> Xtrain, Xtest
+
+# TODO bin:log auc für isUpperQuart durchziehn
+
 
 workingDir = './experiments/dowJones_histFeatures_10y_fullYears/'
 X = pd.read_csv(workingDir + 'X.csv', index_col=0)
@@ -15,12 +21,58 @@ Y = pd.read_csv(workingDir + 'Y.csv', index_col=0)
 
 Xtrain = X[:200]
 Ytrain = Y[:200]
-Xval = X[200:300]
-Yval = Y[200:300]
-Xtest = X[300:400]
-Ytest = Y[300:400]
+Xtest = X[200:300]
+Ytest = Y[200:300]
+dtrain = xgb.DMatrix(Xtrain, label=Ytrain.isUpperQuart)
+dtest = xgb.DMatrix(Xtest, label=Ytest.isUpperQuart)
 
 
+def isModelTooComplex(trainAuc, testAuc):
+    if testAuc <= 0:
+        return False
+    if trainAuc/testAuc > 1.1:
+        return True
+    return False
+
+
+paramSet = {
+    'eta': .01,
+    'eval_metric': 'auc',
+    'objective': 'binary:logistic',
+    'silent': 1,
+    'nthread': 3,
+}
+numRound = 1000
+
+resultsList = []
+paramGen = ParameterGenerator(10)
+
+for params in paramGen:
+    paramSet['max_depth'] = params['max_depth']
+    paramSet['subsample'] = params['subsample']
+    paramSet['colsample_bytree'] = params['colsample_bytree']
+
+    res = xgb.cv(paramSet, dtrain, num_boost_round=numRound, nfold=5, metrics=['auc'])
+    bestNumRound = res['test-auc-mean'].idxmax()
+    bestRow = res.loc[bestNumRound]
+
+    resultsList.append(pd.DataFrame({
+        'max_depth': paramSet['max_depth'],
+        'subsample': paramSet['subsample'],
+        'colsample_bytree': paramSet['colsample_bytree'],
+        'num_boost_round': bestNumRound,
+        'test_auc_mean': bestRow['test-auc-mean'],
+        'test_auc_std': bestRow['test-auc-std'],
+        'train_auc_mean': bestRow['train-auc-mean'],
+        'train_auc_std': bestRow['train-auc-std']
+    }, index=[paramGen.i]))
+
+    paramGen.isTooComplex = isModelTooComplex(bestRow['train-auc-mean'], bestRow['test-auc-mean'])
+
+results = pd.concat(resultsList, ignore_index=True)
+results
+
+0.75/0.7
 # idee ranking objectives ausprobieren
 # 2 logregs jeweils gegen gut und schlecht
 dtrain = xgb.DMatrix(Xtrain, label=Ytrain.isUpperQuart)
