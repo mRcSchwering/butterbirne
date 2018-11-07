@@ -1,5 +1,6 @@
 # This Python file uses the following encoding: utf-8
 import pandas as pd
+from random import choices
 from finData.abtCreator import WindowIterator
 from finData.abtCreator import AbtCreator
 
@@ -65,5 +66,15 @@ X['logVolaSum'] = X['logVola_d2'] + X['logVola_d1']
 X['logReturnDelta'] = X['logReturn_d2'] - X['logReturn_d1']
 X['logVolaDelta'] = X['logVola_d2'] - X['logVola_d1']
 
-Y.to_csv(workingDir + 'Y.csv')
-X.to_csv(workingDir + 'X.csv')
+# 1:2 test:train split
+isTrain = choices([True, True, False], k=X.shape[0])
+isTest = [not d for d in isTrain]
+Xtrain = X[isTrain]
+Ytrain = Y[isTrain]
+Xtest = X[isTest]
+Ytest = Y[isTest]
+
+Xtrain.to_csv(workingDir + 'Xtrain.csv')
+Ytrain.to_csv(workingDir + 'Ytrain.csv')
+Xtest.to_csv(workingDir + 'Xtest.csv')
+Ytest.to_csv(workingDir + 'Ytest.csv')

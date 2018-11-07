@@ -3,7 +3,7 @@ import xgboost as xgb
 import pandas as pd
 
 from finData.parameterGenerator import ParameterGenerator
-
+from sklearn.model_selection import RepeatedStratifiedKFold
 
 # TODO erst mal gucken ob scikit ausreicht
 # TODO Klasse für Train/Val Trennung
@@ -13,6 +13,8 @@ from finData.parameterGenerator import ParameterGenerator
 # TODO createABT nochmal überarbeiten -> Xtrain, Xtest
 
 # TODO bin:log auc für isUpperQuart durchziehn
+
+
 
 
 workingDir = './experiments/dowJones_histFeatures_10y_fullYears/'
@@ -25,6 +27,13 @@ Xtest = X[200:300]
 Ytest = Y[200:300]
 dtrain = xgb.DMatrix(Xtrain, label=Ytrain.isUpperQuart)
 dtest = xgb.DMatrix(Xtest, label=Ytest.isUpperQuart)
+
+
+CV = RepeatedStratifiedKFold(n_splits=3, n_repeats=5)
+
+for trainIdx, testIdx in CV.split(Xtrain, Ytrain.isUpperQuart):
+    print("Train:", trainIdx, "Test:", testIdx)
+
 
 
 def isModelTooComplex(trainAuc, testAuc):
