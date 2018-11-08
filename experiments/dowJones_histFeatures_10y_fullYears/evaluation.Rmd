@@ -1,0 +1,26 @@
+---
+title: "Evaluation"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+library(tidyr)
+theme_set(theme_bw())
+```
+
+```{r}
+data <- read.csv("eval_aucpr_logreg_isUpperQuart.csv")
+```
+
+```{r}
+ggplot(data) +
+  geom_path(aes(x = prec, y = rec, color = factor(round)))
+```
+
+
+

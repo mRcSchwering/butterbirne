@@ -2,10 +2,11 @@ import xgboost as xgb
 import pandas as pd
 from finData.parameterGenerator import ParameterGenerator
 from sklearn.model_selection import RepeatedStratifiedKFold
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import precision_recall_curve
 
-# TODO custom metric
-# TODO early stopping und geringeres learning
+# TODO VARS für die hyperparams (obj, eval metric, target)
+# TODO params aus model selection merken
+# TODO anstatt prec rec vorberechnen, label porbs paare speichern für eval
 
 # TODO für die anderen strategien
 # TODO refactorn
@@ -14,7 +15,8 @@ from sklearn.metrics import roc_auc_score
 # define hyperparameter search
 def parameterSearch(params, dtrain, N):
 
-    numRound = 1000
+    numRound = 10000
+    stopEarly = 500
 
     def isModelTooComplex(trainAuc, testAuc):
         if testAuc <= 0:
@@ -31,9 +33,12 @@ def parameterSearch(params, dtrain, N):
         params['subsample'] = paramSet['subsample']
         params['colsample_bytree'] = paramSet['colsample_bytree']
 
-        res = xgb.cv(params, dtrain, num_boost_round=numRound,
-                     nfold=5, metrics=['auc'])
-        bestNumRound = res['test-auc-mean'].idxmax()
+        res = xgb.cv(params, dtrain,
+                     num_boost_round=numRound,
+                     early_stopping_rounds=stopEarly,
+                     nfold=5,
+                     metrics=['aucpr'])
+        bestNumRound = res['test-aucpr-mean'].idxmax()
         bestRow = res.loc[bestNumRound]
 
         resultsList.append(pd.DataFrame({
@@ -41,10 +46,10 @@ def parameterSearch(params, dtrain, N):
             'subsample': params['subsample'],
             'colsample_bytree': params['colsample_bytree'],
             'num_boost_round': bestNumRound,
-            'test_auc_mean': bestRow['test-auc-mean']
+            'test_aucpr_mean': bestRow['test-aucpr-mean']
         }, index=[paramGen.i]))
 
-        paramGen.isTooComplex = isModelTooComplex(bestRow['train-auc-mean'], bestRow['test-auc-mean'])
+        paramGen.isTooComplex = isModelTooComplex(bestRow['train-aucpr-mean'], bestRow['test-aucpr-mean'])
 
     return pd.concat(resultsList, ignore_index=True)
 
@@ -53,7 +58,7 @@ def parameterSearch(params, dtrain, N):
 def modelSelection(params, N, dtrain, dval=None):
     results = parameterSearch(params, dtrain, N)
 
-    bestParams = results.loc[results['test_auc_mean'].idxmax()]
+    bestParams = results.loc[results['test_aucpr_mean'].idxmax()]
     params['max_depth'] = int(bestParams['max_depth'])
     params['subsample'] = bestParams['subsample']
     params['colsample_bytree'] = bestParams['colsample_bytree']
@@ -65,7 +70,7 @@ def modelSelection(params, N, dtrain, dval=None):
 
     probs = model.predict(dval)
     y = [int(d) for d in dval.get_label()]
-    return roc_auc_score(y, probs)
+    return y, probs
 
 
 # load data
@@ -79,8 +84,8 @@ y = Y.isUpperQuart
 # fixed parameters
 N = 20
 fixedParams = {
-    'eta': .01,
-    'eval_metric': 'auc',
+    'eta': .001,
+    'eval_metric': 'aucpr',
     'objective': 'binary:logistic',
     'silent': 1,
     'nthread': 3,
@@ -92,7 +97,7 @@ dtrain = xgb.DMatrix(X, label=y)
 model = modelSelection(fixedParams, N, dtrain)
 
 # evaluate model
-aucs = []
+results = []
 CV = RepeatedStratifiedKFold(n_splits=3, n_repeats=5)
 
 i = 0
@@ -101,10 +106,20 @@ for trainIdx, valIdx in CV.split(X, y):
     print('Round:', i)
     dtrain = xgb.DMatrix(X.iloc[trainIdx], label=y.iloc[trainIdx])
     dval = xgb.DMatrix(X.iloc[valIdx], label=y.iloc[valIdx])
-    auc = modelSelection(fixedParams, N, dtrain, dval)
-    aucs.append(auc)
+    labels, probs = modelSelection(fixedParams, N, dtrain, dval)
+    prec, rec, thr = precision_recall_curve(labels, probs)
+    results.append(pd.DataFrame({
+        'round': i,
+        'prec': prec,
+        'rec': rec
+    }))
 
-aucs
+resultsDf = pd.concat(results)
+resultsDf['eval_metric'] = 'aucpr'
+resultsDf['objective'] = 'binary:logistic'
+resultsDf['target'] = 'isUpperQuart'
+resultsDf.to_csv(workingDir + 'eval_aucpr_logreg_isUpperQuart.csv', index=False)
+
 
 # model
 xgb.plot_importance(model).figure.set_size_inches(12, 8)
